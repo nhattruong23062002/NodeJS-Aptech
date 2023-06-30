@@ -1,5 +1,11 @@
-const { Products, Customers, Orders, Suppliers, Categories } = require("../../models");
-const { getQueryDateTime } = require('../../utils');
+const {
+  Products,
+  Customers,
+  Orders,
+  Suppliers,
+  Categories,
+} = require("../../models");
+const { getQueryDateTime } = require("../../utils");
 
 module.exports = {
   question1: async (req, res, next) => {
@@ -182,8 +188,8 @@ module.exports = {
 
   question3a: async (req, res, next) => {
     try {
-      const s = { $subtract: [100, '$discount'] }; // (100 - 10) s => 90
-      const m = { $multiply: ['$price', s] }; // price * 90
+      const s = { $subtract: [100, "$discount"] }; // (100 - 10) s => 90
+      const m = { $multiply: ["$price", s] }; // price * 90
       const d = { $divide: [m, 100] }; // price * 90 / 100
 
       // let results = await Product.aggregate([
@@ -202,7 +208,7 @@ module.exports = {
 
       let results = await Products.aggregate()
         .addFields({ disPrice: d })
-        .match({ $expr: { $lte: ['$disPrice', parseFloat(40000000)] } })
+        .match({ $expr: { $lte: ["$disPrice", parseFloat(40000000)] } })
         .project({
           categoryId: 0,
           supplierId: 0,
@@ -218,7 +224,7 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
@@ -303,13 +309,13 @@ module.exports = {
         $expr: {
           $and: [
             {
-              $eq: [{ $dayOfMonth: '$birthday' }, { $dayOfMonth: today }],
+              $eq: [{ $dayOfMonth: "$birthday" }, { $dayOfMonth: today }],
             },
-            { $eq: [{ $month: '$birthday' }, { $month: today }] },
+            { $eq: [{ $month: "$birthday" }, { $month: today }] },
           ],
         },
       };
-      
+
       let results = await Customers.find(conditionFind);
       let total = await Customers.countDocuments();
 
@@ -329,10 +335,10 @@ module.exports = {
       const { status } = req.query;
 
       let results = await Orders.find({ status })
-        .populate({ path: 'customers', select: 'firstName lastName' })
-        .populate('employees')
+        .populate({ path: "customers", select: "firstName lastName" })
+        .populate("employees")
         .populate({
-          path: 'orderDetails.products',
+          path: "orderDetails.products",
           select: { name: 1, stock: 1 },
         })
         .lean();
@@ -346,7 +352,7 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
@@ -358,19 +364,19 @@ module.exports = {
       let results = await Orders.aggregate()
         .match({ status })
         .lookup({
-          from: 'customers',
-          localField: 'customerId',
-          foreignField: '_id',
-          as: 'customer',
+          from: "customers",
+          localField: "customerId",
+          foreignField: "_id",
+          as: "customer",
         })
-        .unwind('customer')
+        .unwind("customer")
         .lookup({
-          from: 'employees',
-          localField: 'employeeId',
-          foreignField: '_id',
-          as: 'employee',
+          from: "employees",
+          localField: "employeeId",
+          foreignField: "_id",
+          as: "employee",
         })
-        .unwind('employee')
+        .unwind("employee")
         .project({
           customerId: 0,
           employeeId: 0,
@@ -385,7 +391,7 @@ module.exports = {
       // .populate({ path: 'customer', select: 'firstName lastName' })
       // .populate('employee')
       // .populate({
-      //   path: 'orderDetails.product', 
+      //   path: 'orderDetails.product',
       //   select: { name: 1 , stock: 1},
       // })
       // .select('-customerId -employeeId -orderDetails.productId')
@@ -400,7 +406,7 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
@@ -412,8 +418,9 @@ module.exports = {
       const conditionFind = {
         $expr: {
           $and: [
-            {status},
-            { $eq: [{ $dayOfMonth: "$shippedDate" },{ $dayOfMonth: findDate }],
+            { status },
+            {
+              $eq: [{ $dayOfMonth: "$shippedDate" }, { $dayOfMonth: findDate }],
             },
             {
               $eq: [{ $month: "$shippedDate" }, { $month: findDate }],
@@ -452,20 +459,20 @@ module.exports = {
       const tmpToDate = new Date(toDate);
       tmpToDate.setHours(0, 0, 0, 0);
       toDate = new Date(tmpToDate.setDate(tmpToDate.getDate() + 1));
-  
-      const compareStatus = { $eq: ['$status', status] };
-      const compareFromDate = { $gte: ['$shippedDate', fromDate] };
-      const compareToDate = { $lt: ['$shippedDate', toDate] };
+
+      const compareStatus = { $eq: ["$status", status] };
+      const compareFromDate = { $gte: ["$shippedDate", fromDate] };
+      const compareToDate = { $lt: ["$shippedDate", toDate] };
 
       const conditionFind = {
         $expr: { $and: [compareStatus, compareFromDate, compareToDate] },
       };
 
-      let results = await Orders.find(conditionFind)   
-      .populate('orderDetails.products')
-      .populate('customers')
-      .populate('employees')
-      .lean();;
+      let results = await Orders.find(conditionFind)
+        .populate("orderDetails.products")
+        .populate("customers")
+        .populate("employees")
+        .lean();
       let total = await Orders.countDocuments();
 
       return res.send({
@@ -568,7 +575,10 @@ module.exports = {
     try {
       const { shippingAddress } = req.query;
       const conditionFind = {
-        shippingAddress: { $regex: new RegExp(`${shippingAddress}`), $options: "i" },
+        shippingAddress: {
+          $regex: new RegExp(`${shippingAddress}`),
+          $options: "i",
+        },
       };
 
       let results = await Orders.find(conditionFind);
@@ -587,10 +597,10 @@ module.exports = {
 
   question15: async (req, res, next) => {
     try {
-      const {supplierNames} = req.query;
-      
+      const { supplierNames } = req.query;
+
       const conditionFind = {
-          name: {$in : supplierNames}
+        name: { $in: supplierNames },
       };
 
       let results = await Suppliers.find(conditionFind);
@@ -609,28 +619,27 @@ module.exports = {
 
   question18: async (req, res, next) => {
     try {
-
       let results = await Categories.aggregate()
         .lookup({
-          from: 'products',
-          localField: '_id',
-          foreignField: 'categoryId',
-          as: 'products',
+          from: "products",
+          localField: "_id",
+          foreignField: "categoryId",
+          as: "products",
         })
         .unwind({
-          path:'$products',
-          preserveNullAndEmptyArrays:true
+          path: "$products",
+          preserveNullAndEmptyArrays: true,
         })
         .group({
-          _id : '$_id',
-          name: {$first : '$name'},
-          description:{$first : '$description'},
+          _id: "$_id",
+          name: { $first: "$name" },
+          description: { $first: "$description" },
           totalProduct: {
-            $sum : '$products.stock'
-          }
+            $sum: "$products.stock",
+          },
         })
-        .sort({totalProduct:-1,name:1})
-        
+        .sort({ totalProduct: -1, name: 1 });
+
       let total = await Categories.countDocuments();
 
       return res.send({
@@ -640,38 +649,38 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
 
   question19: async (req, res, next) => {
     try {
-
       let results = await Suppliers.aggregate()
         .lookup({
-          from: 'products',
-          localField: '_id',
-          foreignField: 'supplierId',
-          as: 'products',
+          from: "products",
+          localField: "_id",
+          foreignField: "supplierId",
+          as: "products",
         })
         .unwind({
-          path:'$products',
-          preserveNullAndEmptyArrays:true
+          path: "$products",
+          preserveNullAndEmptyArrays: true,
         })
         .group({
-          _id : '$_id',
-          name: {$first : '$name'},
+          _id: "$_id",
+          name: { $first: "$name" },
           totalProduct: {
-            $sum : '$products.stock'
+            $sum: "$products.stock",
           },
-          count:{
-            $sum:{ $cond: {if : {$gt :['$products.stock',0]} , then: 1, else: 0}}
-          }
+          count: {
+            $sum: {
+              $cond: { if: { $gt: ["$products.stock", 0] }, then: 1, else: 0 },
+            },
+          },
         })
-        .sort({totalProduct:-1,name:1})
-        
-        
+        .sort({ totalProduct: -1, name: 1 });
+
       let total = await Suppliers.countDocuments();
 
       return res.send({
@@ -681,7 +690,7 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
@@ -696,35 +705,35 @@ module.exports = {
       const tmpToDate = new Date(toDate);
       tmpToDate.setHours(0, 0, 0, 0);
       toDate = new Date(tmpToDate.setDate(tmpToDate.getDate() + 1));
-  
-      const compareStatus = { $eq: ['$status', status] };
-      const compareFromDate = { $gte: ['$shippedDate', fromDate] };
-      const compareToDate = { $lt: ['$shippedDate', toDate] };
+
+      const compareStatus = { $eq: ["$status", status] };
+      const compareFromDate = { $gte: ["$shippedDate", fromDate] };
+      const compareToDate = { $lt: ["$shippedDate", toDate] };
 
       const conditionFind = {
         $expr: { $and: [compareStatus, compareFromDate, compareToDate] },
       };
 
       let results = await Orders.aggregate()
-      .match({
-        ...conditionFind,
-      })
-      .unwind('orderDetails')
-      .lookup({
-        from: 'products',
-        localField: 'orderDetails.productId',
-        foreignField: '_id',
-        as: 'orderDetails.product',
-      })
-      .unwind('orderDetails.product')
-      .group({
-        _id: '$orderDetails.productId',
-        name: { $first: '$orderDetails.product.name' },
-        price: { $first: '$orderDetails.product.price' },
-        discount: { $first: '$orderDetails.product.discount' },
-        stock: { $first: '$orderDetails.product.stock' },
-        count: { $sum: 1 },
-      });
+        .match({
+          ...conditionFind,
+        })
+        .unwind("orderDetails")
+        .lookup({
+          from: "products",
+          localField: "orderDetails.productId",
+          foreignField: "_id",
+          as: "orderDetails.product",
+        })
+        .unwind("orderDetails.product")
+        .group({
+          _id: "$orderDetails.productId",
+          name: { $first: "$orderDetails.product.name" },
+          price: { $first: "$orderDetails.product.price" },
+          discount: { $first: "$orderDetails.product.discount" },
+          stock: { $first: "$orderDetails.product.stock" },
+          count: { $sum: 1 },
+        });
 
       let total = await Orders.countDocuments();
 
@@ -749,32 +758,31 @@ module.exports = {
       const tmpToDate = new Date(toDate);
       tmpToDate.setHours(0, 0, 0, 0);
       toDate = new Date(tmpToDate.setDate(tmpToDate.getDate() + 1));
-  
-      const compareStatus = { $eq: ['$status', status] };
-      const compareFromDate = { $gte: ['$shippedDate', fromDate] };
-      const compareToDate = { $lt: ['$shippedDate', toDate] };
+
+      const compareStatus = { $eq: ["$status", status] };
+      const compareFromDate = { $gte: ["$shippedDate", fromDate] };
+      const compareToDate = { $lt: ["$shippedDate", toDate] };
 
       const conditionFind = {
         $expr: { $and: [compareStatus, compareFromDate, compareToDate] },
       };
 
       let results = await Orders.aggregate()
-      .match({
-        ...conditionFind,
-      })
-      .lookup({
-        from: 'customers',
-        localField: 'customerId',
-        foreignField: '_id',
-        as: 'customer',
-      })
-      .unwind('customer') 
-      .group({
-        _id: '$customer._id',
-        firstName: { $first: '$customer.firstName' },
-        lastName: { $first: '$customer.lastName' },
-
-      });
+        .match({
+          ...conditionFind,
+        })
+        .lookup({
+          from: "customers",
+          localField: "customerId",
+          foreignField: "_id",
+          as: "customer",
+        })
+        .unwind("customer")
+        .group({
+          _id: "$customer._id",
+          firstName: { $first: "$customer.firstName" },
+          lastName: { $first: "$customer.lastName" },
+        });
 
       let total = await Orders.countDocuments();
 
@@ -797,7 +805,7 @@ module.exports = {
       let results = await Orders.aggregate()
         .match(conditionFind)
         .unwind({
-          path: '$orderDetails',
+          path: "$orderDetails",
           preserveNullAndEmptyArrays: true,
         })
         .addFields({
@@ -806,9 +814,9 @@ module.exports = {
               $divide: [
                 {
                   $multiply: [
-                    '$orderDetails.price',
-                    { $subtract: [100, '$orderDetails.discount'] },
-                    '$orderDetails.quantity',
+                    "$orderDetails.price",
+                    { $subtract: [100, "$orderDetails.discount"] },
+                    "$orderDetails.quantity",
                   ],
                 },
                 100,
@@ -817,10 +825,10 @@ module.exports = {
           },
         })
 
-      .group({
-        _id: '$customerId',
-        total: { $sum: '$total' },
-      });
+        .group({
+          _id: "$customerId",
+          total: { $sum: "$total" },
+        });
 
       let total = await Orders.countDocuments();
 
@@ -831,7 +839,7 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
@@ -839,37 +847,37 @@ module.exports = {
   question23: async (req, res, next) => {
     try {
       let results = await Orders.aggregate()
-      .unwind('orderDetails')
-      .lookup({
-        from: 'products',
-        localField: 'orderDetails.productId',
-        foreignField: '_id',
-        as: 'orderDetails.product',
-      })
-      .unwind({
-        path: '$orderDetails',
-        preserveNullAndEmptyArrays: true,
-      })
-      .addFields({
-        total: {
-          $sum: {
-            $divide: [
-              {
-                $multiply: [
-                  '$orderDetails.price',
-                  { $subtract: [100, '$orderDetails.discount'] },
-                  '$orderDetails.quantity',
-                ],
-              },
-              100,
-            ],
+        .unwind("orderDetails")
+        .lookup({
+          from: "products",
+          localField: "orderDetails.productId",
+          foreignField: "_id",
+          as: "orderDetails.product",
+        })
+        .unwind({
+          path: "$orderDetails",
+          preserveNullAndEmptyArrays: true,
+        })
+        .addFields({
+          total: {
+            $sum: {
+              $divide: [
+                {
+                  $multiply: [
+                    "$orderDetails.price",
+                    { $subtract: [100, "$orderDetails.discount"] },
+                    "$orderDetails.quantity",
+                  ],
+                },
+                100,
+              ],
+            },
           },
-        },
-      })
-    .group({
-      _id: null,
-      total: { $sum: '$total' },
-    });
+        })
+        .group({
+          _id: null,
+          total: { $sum: "$total" },
+        });
 
       let total = await Orders.countDocuments();
 
@@ -886,10 +894,9 @@ module.exports = {
 
   question24: async (req, res, next) => {
     try {
-
       let results = await Orders.aggregate()
         .unwind({
-          path: '$orderDetails',
+          path: "$orderDetails",
           preserveNullAndEmptyArrays: true,
         })
         .addFields({
@@ -898,9 +905,9 @@ module.exports = {
               $divide: [
                 {
                   $multiply: [
-                    '$orderDetails.price',
-                    { $subtract: [100, '$orderDetails.discount'] },
-                    '$orderDetails.quantity',
+                    "$orderDetails.price",
+                    { $subtract: [100, "$orderDetails.discount"] },
+                    "$orderDetails.quantity",
                   ],
                 },
                 100,
@@ -909,10 +916,10 @@ module.exports = {
           },
         })
 
-      .group({
-        _id: '$employeeId',
-        total: { $sum: '$total' },
-      });
+        .group({
+          _id: "$employeeId",
+          total: { $sum: "$total" },
+        });
 
       let total = await Orders.countDocuments();
 
@@ -923,7 +930,7 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
@@ -931,27 +938,24 @@ module.exports = {
   question25: async (req, res, next) => {
     try {
       const conditionFind = {
-        orders: { $size: 0}
+        orders: { $size: 0 },
       };
       let results = await Products.aggregate()
-      .lookup({
-        from: 'orders',
-        localField: '_id',
-        foreignField: 'orderDetails.productId',
-        as: 'orders',
-      })
-      .match(
-        conditionFind,
-      )
-      .group({
-        _id: '$_id',
-        name: { $first: '$name' },
-        price: { $first: '$price' },
-        discount: { $first: '$discount' },
-        stock: { $first: '$stock' },
-      });
+        .lookup({
+          from: "orders",
+          localField: "_id",
+          foreignField: "orderDetails.productId",
+          as: "orders",
+        })
+        .match(conditionFind)
+        .group({
+          _id: "$_id",
+          name: { $first: "$name" },
+          price: { $first: "$price" },
+          discount: { $first: "$discount" },
+          stock: { $first: "$stock" },
+        });
 
-      
       let total = await Products.countDocuments();
 
       return res.send({
@@ -967,7 +971,7 @@ module.exports = {
 
   question26: async (req, res, next) => {
     try {
-      let {fromDate, toDate } = req.query;
+      let { fromDate, toDate } = req.query;
 
       fromDate = new Date(fromDate);
       fromDate.setHours(0, 0, 0, 0);
@@ -975,29 +979,28 @@ module.exports = {
       const tmpToDate = new Date(toDate);
       tmpToDate.setHours(0, 0, 0, 0);
       toDate = new Date(tmpToDate.setDate(tmpToDate.getDate() + 1));
-  
-  
+
       let results = await Products.aggregate()
         .lookup({
-          from: 'orders', 
-          localField: '_id',
-          foreignField: 'orderDetails.productId',
-          as: 'orders',
+          from: "orders",
+          localField: "_id",
+          foreignField: "orderDetails.productId",
+          as: "orders",
         })
         .unwind({
-          path: '$orders',
+          path: "$orders",
           preserveNullAndEmptyArrays: true,
         })
 
         .group({
-          _id: '$supplierId',
-          ordersArr: { "$push": "$orders" },
+          _id: "$supplierId",
+          ordersArr: { $push: "$orders" },
         })
         .unwind({
-          path: '$ordersArr',
+          path: "$ordersArr",
           preserveNullAndEmptyArrays: true,
         })
-        
+
         .match({
           $or: [
             {
@@ -1005,31 +1008,31 @@ module.exports = {
                 { ordersArr: { $ne: null } },
                 {
                   $or: [
-                    { 'ordersArr.createdDate': { $lte: fromDate } },
-                    { 'ordersArr.createdDate': { $gte: toDate } },
+                    { "ordersArr.createdDate": { $lte: fromDate } },
+                    { "ordersArr.createdDate": { $gte: toDate } },
                   ],
                 },
               ],
             },
             {
-               ordersArr: null,
+              ordersArr: null,
             },
           ],
         })
-        
+
         .lookup({
-          from: 'suppliers',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'supplier',
+          from: "suppliers",
+          localField: "_id",
+          foreignField: "_id",
+          as: "supplier",
         })
-        .unwind('supplier')
+        .unwind("supplier")
         .project({
-          name: '$supplier.name',
-          email: '$supplier.email',
-          phoneNumber: '$supplier.phoneNumber',
-          address: '$supplier.address',
-        })
+          name: "$supplier.name",
+          email: "$supplier.email",
+          phoneNumber: "$supplier.phoneNumber",
+          address: "$supplier.address",
+        });
 
       let total = await Products.countDocuments();
 
@@ -1040,7 +1043,7 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
@@ -1053,7 +1056,7 @@ module.exports = {
       let results = await Orders.aggregate()
         .match(conditionFind)
         .unwind({
-          path: '$orderDetails',
+          path: "$orderDetails",
           preserveNullAndEmptyArrays: true,
         })
         .addFields({
@@ -1062,9 +1065,9 @@ module.exports = {
               $divide: [
                 {
                   $multiply: [
-                    '$orderDetails.price',
-                    { $subtract: [100, '$orderDetails.discount'] },
-                    '$orderDetails.quantity',
+                    "$orderDetails.price",
+                    { $subtract: [100, "$orderDetails.discount"] },
+                    "$orderDetails.quantity",
                   ],
                 },
                 100,
@@ -1073,26 +1076,28 @@ module.exports = {
           },
         })
 
-      .group({
-        _id: '$employeeId',
-        total: { $sum: '$total' },
-      })
-      .lookup({
-        from: 'employees',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'employees',
-      })
-      .unwind('employees')
-      .project({
-        firstName: '$employees.firstName',
-        lastName: '$employees.lastName',
-        phoneNumber: '$employees.phoneNumber',
-        address: '$employees.address',
-        email: '$employees.email',
-        totalSales: 1,
-      })
-      .sort({ total: -1 }).skip(0).limit(2);
+        .group({
+          _id: "$employeeId",
+          total: { $sum: "$total" },
+        })
+        .lookup({
+          from: "employees",
+          localField: "_id",
+          foreignField: "_id",
+          as: "employees",
+        })
+        .unwind("employees")
+        .project({
+          firstName: "$employees.firstName",
+          lastName: "$employees.lastName",
+          phoneNumber: "$employees.phoneNumber",
+          address: "$employees.address",
+          email: "$employees.email",
+          totalSales: 1,
+        })
+        .sort({ total: -1 })
+        .skip(0)
+        .limit(2);
 
       let total = await Orders.countDocuments();
 
@@ -1103,7 +1108,7 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
@@ -1116,7 +1121,7 @@ module.exports = {
       let results = await Orders.aggregate()
         .match(conditionFind)
         .unwind({
-          path: '$orderDetails',
+          path: "$orderDetails",
           preserveNullAndEmptyArrays: true,
         })
         .addFields({
@@ -1125,9 +1130,9 @@ module.exports = {
               $divide: [
                 {
                   $multiply: [
-                    '$orderDetails.price',
-                    { $subtract: [100, '$orderDetails.discount'] },
-                    '$orderDetails.quantity',
+                    "$orderDetails.price",
+                    { $subtract: [100, "$orderDetails.discount"] },
+                    "$orderDetails.quantity",
                   ],
                 },
                 100,
@@ -1136,11 +1141,13 @@ module.exports = {
           },
         })
 
-      .group({
-        _id: '$customerId',
-        total: { $sum: '$total' },
-      })
-      .sort({ total: -1 }).skip(0).limit(2);
+        .group({
+          _id: "$customerId",
+          total: { $sum: "$total" },
+        })
+        .sort({ total: -1 })
+        .skip(0)
+        .limit(2);
 
       let total = await Orders.countDocuments();
 
@@ -1151,14 +1158,14 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
 
   question29: async (req, res, next) => {
     try {
-      let results = await Products.distinct('discount')
+      let results = await Products.distinct("discount");
 
       let total = await Products.countDocuments();
 
@@ -1175,68 +1182,69 @@ module.exports = {
 
   question30: async (req, res, next) => {
     try {
-
       let results = await Categories.aggregate([
         {
           $lookup: {
             from: "products",
             localField: "_id",
             foreignField: "categoryId",
-            as: "product"
-          }
+            as: "product",
+          },
         },
         {
           $unwind: {
-            path : '$product',
-            preserveNullAndEmptyArrays:true
-          }
+            path: "$product",
+            preserveNullAndEmptyArrays: true,
+          },
         },
         {
-          $lookup : ({
-            from: 'orders',
-            localField: 'product._id',
-            foreignField: 'orderDetails.productId',
-            as: 'orders',
-          })
+          $lookup: {
+            from: "orders",
+            localField: "product._id",
+            foreignField: "orderDetails.productId",
+            as: "orders",
+          },
         },
         {
-          $unwind:{ 
-            path : '$orders',
-            preserveNullAndEmptyArrays:true
-          }
+          $unwind: {
+            path: "$orders",
+            preserveNullAndEmptyArrays: true,
+          },
         },
         {
-          $unwind:{ 
-            path : '$orders.orderDetails',
-            preserveNullAndEmptyArrays:true
-          }
+          $unwind: {
+            path: "$orders.orderDetails",
+            preserveNullAndEmptyArrays: true,
+          },
         },
-        
-        { $addFields : ({
-          total: {
-            $sum: {
-              $divide: [
-                {
-                  $multiply: [
-                    '$orders.orderDetails.price',
-                    { $subtract: [100, '$orders.orderDetails.discount'] },
-                    '$orders.orderDetails.quantity',
-                  ],
-                },
-                100,
-              ],
+
+        {
+          $addFields: {
+            total: {
+              $sum: {
+                $divide: [
+                  {
+                    $multiply: [
+                      "$orders.orderDetails.price",
+                      { $subtract: [100, "$orders.orderDetails.discount"] },
+                      "$orders.orderDetails.quantity",
+                    ],
+                  },
+                  100,
+                ],
+              },
             },
           },
-        })}, 
+        },
         {
           $group: {
-            _id : "$_id",
-            name: { $first: '$name'},
-            total: { $sum: '$total' },
-          }
-        } 
-      ])
-        
+            _id: "$_id",
+            name: { $first: "$name" },
+            total: { $sum: "$total" },
+          },
+        },
+      ]);
+
       let total = await Categories.countDocuments();
 
       return res.send({
@@ -1246,51 +1254,51 @@ module.exports = {
         payload: results,
       });
     } catch (err) {
-      console.log('««««« err »»»»»', err);
+      console.log("««««« err »»»»»", err);
       return res.status(500).json({ code: 500, error: err });
     }
   },
 
   question31: async (req, res, next) => {
     try {
-      let {status, fromDate, toDate } = req.query;
+      let { status, fromDate, toDate } = req.query;
       const conditionFind = getQueryDateTime(fromDate, toDate);
       let results = await Orders.aggregate()
-      .match({
-        ...conditionFind,
-        status
-      })
-      .unwind('orderDetails')
-      .lookup({
-        from: 'products',
-        localField: 'orderDetails.productId',
-        foreignField: '_id',
-        as: 'orderDetails.product',
-      })
-      .unwind({
-        path: '$orderDetails',
-        preserveNullAndEmptyArrays: true,
-      })
-      .addFields({
-        total: {
-          $sum: {
-            $divide: [
-              {
-                $multiply: [
-                  '$orderDetails.price',
-                  { $subtract: [100, '$orderDetails.discount'] },
-                  '$orderDetails.quantity',
-                ],
-              },
-              100,
-            ],
+        .match({
+          ...conditionFind,
+          status,
+        })
+        .unwind("orderDetails")
+        .lookup({
+          from: "products",
+          localField: "orderDetails.productId",
+          foreignField: "_id",
+          as: "orderDetails.product",
+        })
+        .unwind({
+          path: "$orderDetails",
+          preserveNullAndEmptyArrays: true,
+        })
+        .addFields({
+          total: {
+            $sum: {
+              $divide: [
+                {
+                  $multiply: [
+                    "$orderDetails.price",
+                    { $subtract: [100, "$orderDetails.discount"] },
+                    "$orderDetails.quantity",
+                  ],
+                },
+                100,
+              ],
+            },
           },
-        },
-      })
-    .group({
-      _id: '$_id',
-      total: { $sum: '$total' },
-    });
+        })
+        .group({
+          _id: "$_id",
+          total: { $sum: "$total" },
+        });
 
       let total = await Orders.countDocuments();
 
@@ -1307,44 +1315,44 @@ module.exports = {
 
   question32: async (req, res, next) => {
     try {
-      let {fromDate, toDate } = req.query;
+      let { fromDate, toDate } = req.query;
       const conditionFind = getQueryDateTime(fromDate, toDate);
       let results = await Orders.aggregate()
-      .match({
-        ...conditionFind,
-      })
-      .unwind('orderDetails')
-      .lookup({
-        from: 'products',
-        localField: 'orderDetails.productId',
-        foreignField: '_id',
-        as: 'orderDetails.product',
-      })
-      .unwind({
-        path: '$orderDetails',
-        preserveNullAndEmptyArrays: true,
-      })
-      .addFields({
-        total: {
-          $sum: {
-            $divide: [
-              {
-                $multiply: [
-                  '$orderDetails.price',
-                  { $subtract: [100, '$orderDetails.discount'] },
-                  '$orderDetails.quantity',
-                ],
-              },
-              100,
-            ],
+        .match({
+          ...conditionFind,
+        })
+        .unwind("orderDetails")
+        .lookup({
+          from: "products",
+          localField: "orderDetails.productId",
+          foreignField: "_id",
+          as: "orderDetails.product",
+        })
+        .unwind({
+          path: "$orderDetails",
+          preserveNullAndEmptyArrays: true,
+        })
+        .addFields({
+          total: {
+            $sum: {
+              $divide: [
+                {
+                  $multiply: [
+                    "$orderDetails.price",
+                    { $subtract: [100, "$orderDetails.discount"] },
+                    "$orderDetails.quantity",
+                  ],
+                },
+                100,
+              ],
+            },
           },
-        },
-      })
-    .group({
-      _id: '$_id',
-      total: { $sum: '$total' },
-    })
-    .sort({ total: -1 });
+        })
+        .group({
+          _id: "$_id",
+          total: { $sum: "$total" },
+        })
+        .sort({ total: -1 });
 
       let total = await Orders.countDocuments();
 
@@ -1361,45 +1369,47 @@ module.exports = {
 
   question33: async (req, res, next) => {
     try {
-      let {fromDate, toDate } = req.query;
+      let { fromDate, toDate } = req.query;
       const conditionFind = getQueryDateTime(fromDate, toDate);
       let results = await Orders.aggregate()
-      .match({
-        ...conditionFind,
-      })
-      .unwind('orderDetails')
-      .lookup({
-        from: 'products',
-        localField: 'orderDetails.productId',
-        foreignField: '_id',
-        as: 'orderDetails.product',
-      })
-      .unwind({
-        path: '$orderDetails',
-        preserveNullAndEmptyArrays: true,
-      })
-      .addFields({
-        total: {
-          $sum: {
-            $divide: [
-              {
-                $multiply: [
-                  '$orderDetails.price',
-                  { $subtract: [100, '$orderDetails.discount'] },
-                  '$orderDetails.quantity',
-                ],
-              },
-              100,
-            ],
+        .match({
+          ...conditionFind,
+        })
+        .unwind("orderDetails")
+        .lookup({
+          from: "products",
+          localField: "orderDetails.productId",
+          foreignField: "_id",
+          as: "orderDetails.product",
+        })
+        .unwind({
+          path: "$orderDetails",
+          preserveNullAndEmptyArrays: true,
+        })
+        .addFields({
+          total: {
+            $sum: {
+              $divide: [
+                {
+                  $multiply: [
+                    "$orderDetails.price",
+                    { $subtract: [100, "$orderDetails.discount"] },
+                    "$orderDetails.quantity",
+                  ],
+                },
+                100,
+              ],
+            },
           },
-        },
-      })
-    .group({
-      _id: '$_id',
-      total: { $sum: '$total' },
-    })
-    
-    .sort({ total: 1 }).skip(0).limit(1);
+        })
+        .group({
+          _id: "$_id",
+          total: { $sum: "$total" },
+        })
+
+        .sort({ total: 1 })
+        .skip(0)
+        .limit(1);
 
       let total = await Orders.countDocuments();
 
@@ -1416,47 +1426,47 @@ module.exports = {
 
   question34: async (req, res, next) => {
     try {
-      let {fromDate, toDate } = req.query;
+      let { fromDate, toDate } = req.query;
       const conditionFind = getQueryDateTime(fromDate, toDate);
       let results = await Orders.aggregate()
-      .match({
-        ...conditionFind,
-      })
-      .unwind('orderDetails')
-      .lookup({
-        from: 'products',
-        localField: 'orderDetails.productId',
-        foreignField: '_id',
-        as: 'orderDetails.product',
-      })
-      .unwind({
-        path: '$orderDetails',
-        preserveNullAndEmptyArrays: true,
-      })
-      .addFields({
-        total: {
-          $sum: {
-            $divide: [
-              {
-                $multiply: [
-                  '$orderDetails.price',
-                  { $subtract: [100, '$orderDetails.discount'] },
-                  '$orderDetails.quantity',
-                ],
-              },
-              100,
-            ],
+        .match({
+          ...conditionFind,
+        })
+        .unwind("orderDetails")
+        .lookup({
+          from: "products",
+          localField: "orderDetails.productId",
+          foreignField: "_id",
+          as: "orderDetails.product",
+        })
+        .unwind({
+          path: "$orderDetails",
+          preserveNullAndEmptyArrays: true,
+        })
+        .addFields({
+          total: {
+            $sum: {
+              $divide: [
+                {
+                  $multiply: [
+                    "$orderDetails.price",
+                    { $subtract: [100, "$orderDetails.discount"] },
+                    "$orderDetails.quantity",
+                  ],
+                },
+                100,
+              ],
+            },
           },
-        },
-      })
-    .group({
-      _id:null,
-      average: { $avg: "$total" }
-    })
-    .project({
-      _id: 0,
-      average:1
-    })
+        })
+        .group({
+          _id: null,
+          average: { $avg: "$total" },
+        })
+        .project({
+          _id: 0,
+          average: 1,
+        });
 
       let total = await Orders.countDocuments();
 
@@ -1471,4 +1481,98 @@ module.exports = {
     }
   },
 
+  flashsale: async (req, res, next) => {
+    try {
+      const conditionFind = {
+        discount: { $gt: 0 },
+      };
+
+      let results = await Products.find(conditionFind).sort({ discount: -1 });
+      let total = await Products.countDocuments();
+
+      return res.send({
+        code: 200,
+        total,
+        totalResult: results.length,
+        payload: results,
+      });
+    } catch (err) {
+      return res.status(500).json({ code: 500, error: err });
+    }
+  },
+
+  hotdeal: async (req, res, next) => {
+    try {
+      let results = await Orders.aggregate()
+        .match({
+          status: "COMPLETED",
+        })
+        .unwind("orderDetails")
+        .lookup({
+          from: "products",
+          localField: "orderDetails.productId",
+          foreignField: "_id",
+          as: "orderDetails.product",
+        })
+        .unwind("orderDetails.product")
+        .group({
+          _id: "$orderDetails.productId",
+          name: { $first: "$orderDetails.product.name" },
+          price: { $first: "$orderDetails.product.price" },
+          discount: { $first: "$orderDetails.product.discount" },
+          quantity: { $sum: "$orderDetails.quantity" },
+          stock: { $first: "$orderDetails.product.stock" },
+          cover: { $first: "$orderDetails.product.cover" },
+          count: { $sum: 1 },
+        })
+        .sort({ quantity: -1 });
+      let total = await Orders.countDocuments();
+
+      return res.send({
+        code: 200,
+        total,
+        totalResult: results.length,
+        payload: results,
+      });
+    } catch (err) {
+      return res.status(500).json({ code: 500, error: err });
+    }
+  },
+
+  productlist: async (req, res, next) => {
+    try {
+      const { limit, skip } = req.query;
+      const conditionFind = {
+        discount: { $lte: 100 },
+      };
+      let results = await Products.aggregate()
+        .match(conditionFind)
+        .skip(parseInt(skip))
+        .limit(parseInt(limit))
+      let total = await Products.countDocuments();
+
+      return res.send({
+        code: 200,
+        total,
+        totalResult: results.length,
+        payload: results,
+      });
+    } catch (err) {
+      return res.status(500).json({ code: 500, error: err });
+    }
+  },
+  productSearch: async (req, res, next) => {
+    try {
+      const { name } = req.query;
+      const conditionFind = {
+        name: { $regex: new RegExp(`${name}`), $options: "i" },
+      };
+      let results = await       
+      Products.find(conditionFind).populate('categories').populate('suppliers');
+      return res.send({ code: 200, payload: results });
+    } catch (err) {
+      console.log("««««« err »»»»»", err);
+      return res.status(500).json({ code: 500, error: err });
+    }
+  },
 };

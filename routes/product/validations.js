@@ -46,7 +46,7 @@ module.exports = {
         .string()
         .max(500, "Mô tả sản phẩm không được vượt quá 500 ký tự"),
       price: yup.number().required().min(0),
-      discount: yup.number().required().min(0).max(75),
+      discount: yup.number().min(0).max(75),
       stock: yup.number().required().min(0),
       categoryId: yup
         .string()
@@ -62,6 +62,8 @@ module.exports = {
           if (!value) return true;
           return ObjectId.isValid(value);
         }),
+      cover: yup
+        .string()
     }),
   }),
 };

@@ -20,7 +20,8 @@ module.exports = {
       description: yup
         .string()
         .max(50, "Mô tả không được vượt quá 50 ký tự"),
-      
+      img : yup
+        .string()
     }),
   }),
 };

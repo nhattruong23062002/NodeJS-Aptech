@@ -41,10 +41,11 @@ const {
   question31,
   question32,
   question33,
-  question34
-
-
-
+  question34,
+  flashsale,
+  hotdeal,
+  productlist,
+  productSearch
 
 } = require("./controller");
 
@@ -86,6 +87,13 @@ router.get("/31", question31);
 router.get("/32", question32);
 router.get("/33", question33);
 router.get("/34", question34);
+router.get("/flashsale", flashsale);
+router.get("/hotdeal", hotdeal);
+router.get("/productlist", productlist);
+router.get("/productSearch", productSearch);
+
+
+
 
 
 

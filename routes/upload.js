@@ -12,6 +12,17 @@ const {
 } = require('../helpers/MongoDbHelper');
 const  Media  = require('../models/Media');
 
+router.get("/", async (req, res, next) => {
+  try {
+    let results = await Media.find()
+      .lean()
+    return res.send({ code: 200, payload: results });
+  } catch (err) {
+    console.log("««««« err »»»»»", err);
+    return res.status(500).json({ code: 500, error: err });
+  }
+});
+
 router.post('/upload-single', (req, res) =>
   upload.single('file')(req, res, async (err) => {
     try {

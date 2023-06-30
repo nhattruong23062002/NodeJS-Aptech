@@ -60,9 +60,9 @@ mongoose.connect(CONNECTION_STRING);
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
-app.use("/products", passport.authenticate('jwt', { session: false }), productRouter);
-app.use("/categories", passport.authenticate('jwt', { session: false }), categoriesRouter);
-app.use("/suppliers", passport.authenticate('jwt', { session: false }), supplierRouter);
+app.use("/products", productRouter);
+app.use("/categories", categoriesRouter);
+app.use("/suppliers", supplierRouter);
 app.use("/customers", passport.authenticate('jwt', { session: false }), customersRouter);
 app.use("/orders", passport.authenticate('jwt', { session: false }), ordersRouter);
 app.use('/media', passport.authenticate('jwt', { session: false }), mediaRouter);

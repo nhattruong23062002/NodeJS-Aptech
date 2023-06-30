@@ -41,7 +41,7 @@ module.exports = {
   createOrder: async function (req, res, next) {
     try {
       const data = req.body;
-      const { customerId, employeeId,orderDetails } = data;
+     /*  const { customerId, employeeId,orderDetails } = data;
 
       const findCustomer = Customers.findById(customerId);
       const findEmployee = Employees.findById(employeeId);
@@ -50,9 +50,9 @@ module.exports = {
 
       const errors = [];
       if (!customer || customer.isDelete) errors.push('Tên khách hàng không tồn tại');
-      if (!employee || employee.isDelete) errors.push('Tên nhân viên không tồn tại');
+      if (!employee || employee.isDelete) errors.push('Tên nhân viên không tồn tại'); */
 
-      await asyncForEach(orderDetails, async (item) => {
+    /*   await asyncForEach(orderDetails, async (item) => {
         const product = await Products.findById(item.productId);
 
         if (!product)
@@ -66,7 +66,7 @@ module.exports = {
           errors,
         });
       }
-      
+       */
       const newItem = new Orders(data);
   
       let result = await newItem.save();
